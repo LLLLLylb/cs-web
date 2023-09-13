@@ -3,53 +3,53 @@
 import React from 'react';
 import Link from 'next/link';
 import clsx from 'clsx';
+import useSWR from 'swr';
+import { SelectItem } from '@nextui-org/react';
 
 const VerticalNav = (
-    // { paths }
+  props: { parentId: any; id: any; index: any}
 ) => {
-    const items = [
-        {
-          id: 1,
-          label:'首页',
-          img: "/images/Blackgradient.png",
-          url:'/',
-          time: '2021-10-13',
-        },
-        {
-            id: 2,
-            label:'队伍建设',
-            img: "/images/Blackgradient.png",
-            url:'/',
-            time: '2021-10-13',
-          },
-        {
-            id: 3,
-            label:'学术交流',
-            img: "/images/Blackgradient.png",
-            url:'/',
-            time: '2021-10-13',
-        },
-      ];
-    const [selectedItemId, setSelectedItemId] = React.useState<number | null>(null);
 
-    const handleItemClick = (itemId: number) => {
-        setSelectedItemId(itemId);
-    };
+    let ParentId = props.parentId
+    let items 
+    const fetcher = (url: RequestInfo | URL) => fetch(url).then(r => r.json())
+    if (props.parentId == 1) {
+      const { data, error } = useSWR(`https://doc.yihuolu.cn/api/v2/menus/${props.id}`, fetcher);
+      if (data) {
+        items = data.data
+      }
+      ParentId = props.id
+    }else{
+      const { data, error } = useSWR(`https://doc.yihuolu.cn/api/v2/menus/${props.parentId}`, fetcher);
+      if (data) {
+        items = data.data
+      }
+    }
+      
+
 
   return (
+    
     <nav className="flex-col ml-5 hidden sm:flex sm:w-36 lg:w-52 absolute top-[64%] lg:top-3/4">
-      <div className="flex justify-center items-center text-white h-[55px] lg:h-[75px]  bg-[url('/images/SidebarNnavigationTitleV2.svg')] bg-cover">
-        <Link href="/" className="hover:font-semibold">
-        Home
-        </Link>
-      </div>
-      {items.map((item) => (
-        <Link key={item.id} href={item.url} className={clsx("flex justify-center items-center h-12 lg:h-16 bg-verticalNavDeSelect text-gray-800",
-            selectedItemId === item.id ? 'bg-verticalNavSelect text-white' : '')}
-            onClick={() => handleItemClick(item.id)}>
-          {item.label}
-        </Link>
-      ))}
+      {items  ?
+        (<div>
+          <div className="flex justify-center items-center text-white h-[55px] lg:h-[75px]  bg-[url('/images/SidebarNnavigationTitleV2.svg')] bg-cover">
+          <Link href={`/catalogue/1/${items.id}/${props.index}`} className="hover:font-semibold w-full text-center	">
+            {items.name}
+          </Link>
+          </div>
+          <div>
+            {items.children.map((item: { id: number; name: string;}, childIndex: number) => (
+              <Link key={item.id} href={`/catalogue/${ParentId}/${item.id}/${childIndex}`} className={clsx("flex justify-center items-center h-12 lg:h-16 bg-primary-100 text-primary-50",
+                  props.id == item.id ? 'bg-verticalNavSelect text-white' : '')}>
+                  {item.name}
+              </Link>
+            ))}
+        </div>
+        </div> )
+      :
+            (<p></p> )}
+
     </nav>
   );
 };

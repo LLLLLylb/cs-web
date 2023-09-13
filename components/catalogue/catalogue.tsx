@@ -3,51 +3,36 @@
 import React from 'react';
 import Link from 'next/link';
 import clsx from 'clsx';
-import Breadcrumbs from './breadcrumbs';
-import List from './list';
-import VerticalNav from './verticalNav';
+import List from './list';  
+import Jsfc from '../bygk/jsfc';
+import JsfcContent from '../bygk/jsfcContent';
+import Byjj from '../bygk/byjj';
+import Zzjg from '../bygk/zzjg';
 
 
 
 const Catalogue = (
-    // { paths }
+    props: { parentId: any; id: any; index: any},
 ) => {
-    const paths = [
-        {
-          id: 1,
-          label:'首页',
-          img: "/images/Blackgradient.png",
-          url:'/',
-          time: '2021-10-13',
-        },
-        {
-            id: 2,
-            label:'队伍建设',
-            img: "/images/Blackgradient.png",
-            url:'/djgz',
-            time: '2021-10-13',
-          },
-        {
-            id: 3,
-            label:'学术交流',
-            img: "/images/Blackgradient.png",
-            url:'/djgz',
-            time: '2021-10-13',
-        },
-      ];
+    let componentToRender;
+
+  // 使用条件语句根据不同的 id 值来选择组件
+  if (props.id == 13 || props.id == 2) {
+    componentToRender = <Byjj id={props.id}/>;
+  } else if (props.id == 14 || props.id == 15) {
+    componentToRender = <Zzjg id={props.id} />;
+  } 
+  else if (props.id == 16) {
+    componentToRender = <Jsfc />;
+  }
+   else {
+    componentToRender = <List parentId={props.parentId} id={props.id} index={props.index} />;
+  }
 
   return (
     <div>
-        <div className=" bg-[url('/images/theme2.png')] bg-cover bg-bottom">
-            <div className="max-w-6xl mx-auto">
-                <div className="flex justify-start relative h-[100px] sm:h-[150px] lg:h-[300px]">
-                    <VerticalNav />
-                    <Breadcrumbs />
-                </div>
-            </div>
-        </div>
         <div className="flex justify-end  mx-auto lg:max-w-[1027px] sm:max-w-[580px] max-w-[342px]">
-            <List />
+            {componentToRender}
         </div>
     </div>
 

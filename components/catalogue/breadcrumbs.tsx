@@ -3,57 +3,54 @@
 import React from 'react';
 import Link from 'next/link';
 import clsx from 'clsx';
+import useSWR from 'swr';
 
 
 
 const Breadcrumbs = (
-    // { paths }
+  props: { parentId: any; id: any; index: any}
 ) => {
-    const paths = [
-        {
-          id: 1,
-          label:'首页',
-          img: "/images/Blackgradient.png",
-          url:'/',
-          time: '2021-10-13',
-        },
-        {
-            id: 2,
-            label:'队伍建设',
-            img: "/images/Blackgradient.png",
-            url:'/djgz',
-            time: '2021-10-13',
-          },
-        {
-            id: 3,
-            label:'学术交流',
-            img: "/images/Blackgradient.png",
-            url:'/djgz',
-            time: '2021-10-13',
-        },
-      ];
-
+  
+      let ParentId = props.parentId
+      let items 
+      const fetcher = (url: RequestInfo | URL) => fetch(url).then(r => r.json())
+      if (props.parentId == 1) {
+        const { data, error } = useSWR(`https://doc.yihuolu.cn/api/v2/menus/${props.id}`, fetcher);
+        if (data) {
+          items = data.data
+        }
+        ParentId = props.id
+      }else{
+        const { data, error } = useSWR(`https://doc.yihuolu.cn/api/v2/menus/${props.parentId}`, fetcher);
+        if (data) {
+          items = data.data
+        }
+      }
   return (
     <nav className="text-sm sm:text-base h-6 self-end  sm:ml-52 lg:ml-64">
-      <ol className="list-none flex backdrop-filter backdrop-blur-sm">
+      {items ?
+      (<ol className="list-none flex backdrop-filter backdrop-blur-sm">
         <li className="mr-1">
-          <Link href="/" className="text-white font-semibold">
-            Home
+        <Link href='/' className="text-white font-semibold">
+              首页&nbsp;&gt;&nbsp;
+          </Link>
+          <Link href={`/catalogue/1/${items.id}`} className="text-white font-semibold">
+            {items.name}
           </Link>
         </li>
-        {paths.map((segment, index) => (
-          <li key={index} className="flex items-center">
-            <span className="mx-1 text-white font-semibold"> &gt; </span>
-            {index === paths.length - 1 ? (
-              <span className="text-white font-semibold">{segment.label}</span>
+        {
+          <li  className="flex items-center">
+            {parseInt(props.parentId) !== 1 ? (
+              <span className="text-white font-semibold">&gt;&nbsp;{items.children[props.index].name}</span>
             ) : (
-              <Link href={segment.url} className="text-white font-semibold">
-                {segment.label}
-              </Link>
+              <p></p>
             )}
           </li>
-        ))}
-      </ol>
+        }
+      </ol>)
+      :
+      (<p></p>)
+      }
     </nav>
   );
 };

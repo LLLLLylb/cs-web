@@ -9,23 +9,15 @@ import {
   NavbarMenu,
 } from '@nextui-org/react';
 import Link from 'next/link';
-import Logo from '@/components/navbar/Logo';
-import Search from '@/components/Search';
+import Logo from './Logo';
+import Search from './Search'
 import clsx from 'clsx';
+import useSWR, { mutate } from 'swr'
 import { GoChevronDown, GoChevronUp, GoChevronRight } from 'react-icons/go';
-interface Item {
-  children: any;
-  id: number;
-  name: string;
-}
 
-interface Data {
-  children: Item[] | null;
-}
 
 export default function Mnnavbar() {
 
-  const [data, setData] = useState<Data | null>(null);
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const [menuItemHoverStates, setMenuItemHoverStates] = useState<{ [key: number]: boolean }>({});
   const [subMenuStates, setSubMenuStates] = React.useState<Record<string, boolean>>({});
@@ -37,54 +29,38 @@ export default function Mnnavbar() {
     }));
   };
 
+  const fetcher = (url: RequestInfo | URL) => fetch(url).then(r => r.json())
+  const { data, error } = useSWR('https://doc.yihuolu.cn/api/v2/menus', fetcher, { revalidateOnFocus: false });
+  
+  let updatedData = []
+  if (data) {
+    updatedData = data.data.children.filter((item: { id: any; }) => item.id !== 5 && item.id !== 7);
+    const newItem = { id: 5, name: '人才培养', show: true, type: "CATALOGUE", link: null, open_mode: "SELF", order: 4, parent_id: 1, children:[
+        {id:5, name: '本科生教育', show: true, type: "CATALOGUE", link: null, open_mode: "SELF",},
+        {id:7, name: '研究生教育', show: true, type: "CATALOGUE", link: null, open_mode: "SELF",}
+    ]};
+    updatedData.splice(3, 0, newItem);
+  }
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch('/api/v1/menus/1');
-        const jsonData = await response.json();
-        console.log('jsonData', jsonData.children)
-        setData(jsonData);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      }
-    };
 
-    fetchData();
-    console.log('------',data )
-  }, []); 
-  const menuItems = [
-    {name:'首页',url:'/'},
-    {name:'本院概况',url:'/djgz',children:[{name:'教师',url:'/djgz/jiaosi'},{name:'本科生',url:'/djgz/benke'},{name:'研究生',url:'/djgz/yanjiu'}]},
-    {name:'新闻公告',url:'/djgz',children:[{name:'教师',url:'/djgz/jiaosi'},{name:'本科生',url:'/djgz/benke'},{name:'研究生',url:'/djgz/yanjiu'}]},
-    {name:'队伍建设',url:'/djgz',children:[{name:'教师',url:'/djgz/jiaosi'},{name:'本科生',url:'/djgz/benke'},{name:'研究生',url:'/djgz/yanjiu'}]},
-    {name:'人才培养',url:'/djgz',children:[{name:'教师',url:'/djgz/jiaosi'},{name:'本科生',url:'/djgz/benke'},{name:'研究生',url:'/djgz/yanjiu'}]},
-    {name:'科研情况',url:'/djgz',children:[{name:'教师',url:'/djgz/jiaosi'},{name:'本科生',url:'/djgz/benke'},{name:'研究生',url:'/djgz/yanjiu'}]},
-    {name:'党建工作',url:'/djgz'},
-    {name:'学生工作',url:'/djgz',children:[{name:'教师',url:'/djgz/jiaosi'},{name:'本科生',url:'/djgz/benke'},{name:'研究生',url:'/djgz/yanjiu'}]},
-    {name:'就业工作',url:'/djgz'},
-    {name:'公告教学',url:'/djgz'},
-    {name:'下载专区',url:'/djgz',children:[{name:'教师',url:'/djgz/jiaosi'},{name:'本科生',url:'/djgz/benke'},{name:'研究生',url:'/djgz/yanjiu'}]},
-
-  ];
   
 
   return (
     <div className='max-w-6xl mx-auto'>
       <div className='p flex items-center justify-between pt-5 pl-5 lg:pl-0 pr-6 mr-[34px]'>
         <Logo />
-        <div className="flex items-center ">
+        <div className="flex items-center">
           <Search/>
           {/* 小屏导航 */}
           <Navbar classNames={{wrapper: ['w-0 px-0']}} className='w-0'>
             <NavbarMenuToggle aria-label={isMenuOpen ? 'Close menu' : 'Open menu'} className='custom:hidden ml-[10px]' />
-            {data && data.children !== null ? 
+            {data && data !== null ? 
             (<NavbarMenu className='gap-0 top-[4.5rem]'>
                 <NavbarItem className='py-2 border-b border-grayBorder'>
-                  <Link href='./' className="inline-flex items-center w-full h-full">首页</Link>
+                  <Link href='/' className="inline-flex items-center w-full h-full">首页</Link>
                 </NavbarItem>
 
-                {data.children.map((item, index) => {
+                {updatedData.map((item: { id: number; name: string; link: null | string ;children: { id: number; name: string; link: null | string }[]; }, index: number) => {
                     // const [isSubMenuOpen, setIsSubMenuOpen] = React.useState(false); // 独立的状态变量
                     const isSubMenuOpen = subMenuStates[item.name] || false;
                     
@@ -98,9 +74,10 @@ export default function Mnnavbar() {
                                 e.stopPropagation(); // 阻止事件冒泡
                                 toggleSubMenu(item.name);
                             }}>
-                            <a href="#">
+                                    
+                            <Link href={`/catalogue/${item.id}/${index}`}>
                                 {item.name}
-                            </a>
+                            </Link>
                             {isSubMenuOpen ? (
                                 <GoChevronUp />
                             ) : (
@@ -111,10 +88,9 @@ export default function Mnnavbar() {
                             {isSubMenuOpen && (
                             // 子菜单项
                             <div className="mt-0 bg-white py- dark:bg-gray-800 dark:border-gray-700 flex flex-wrap">
-                                {item.children.map((child: { name: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | React.PromiseLikeOfReactNode | null | undefined; }, childIndex: any) => (
+                                {item.children.map((child: { id: number; name: string; link: null | string }, childIndex: number) => (
                                 <Link
-                                    // href={child.url}
-                                    href='./'
+                                    href={`/catalogue/${child.id}/${childIndex}`}
                                     key={`${child.name}-${childIndex}`}
                                     className="flex justify-center items-center w-1/2 px-1 py-1 min-w-[79px]" // 每行两个，所以宽度设置为一半
                                 >
@@ -127,19 +103,20 @@ export default function Mnnavbar() {
                         </div>
                         ) : (
                         // 无子菜单项
-                        <Link 
-                        // href={item.url} 
-                        href='./'
-                        className="inline-flex items-center w-full h-full">
-                            {item.name}
-                        </Link>
+                        <div>
+                          {item.link ? (
+                            <Link href={item.link}  className="inline-flex items-center w-full" replace>{item.name}</Link>
+                          ) : (
+                            <Link href={`/catalogue/${item.id}`} className="inline-flex items-center w-full">{item.name}</Link>
+                          ) }
+                        </div>
                         )}
                     </NavbarItem>
                     );
                 })}
             </NavbarMenu>)
             :
-            (<p>loading</p> )}
+            (<p></p> )}
 
           </Navbar>
         </div>
@@ -148,25 +125,17 @@ export default function Mnnavbar() {
       <Navbar
         maxWidth='full'
         classNames={{
-          wrapper: ['justify-center'],
+          wrapper: ['justify-center ba'],
         }}
-        className={clsx('justify-center hidden custom:flex h-12')}
+        className={clsx('justify-center hidden custom:flex h-12 backdrop-blur-none bg-transparent')}
       >
         
-        {data && data.children !== null ? 
+        {data && data !== null ? 
         (<NavbarContent className='hidden gap-3 custom:flex' justify='center'>
           {/* 导航 */}
-          <NavbarItem><Link href='./' className="inline-flex items-center">首页</Link></NavbarItem>
-          {data.children.map((item, index) => {
-            // const [isHovered, setIsHovered] = React.useState(false);
+          <NavbarItem><Link href='/' className="inline-flex items-center">首页</Link></NavbarItem>
+          {updatedData.map((item: { id: number; name: string; link: null | string ;children: { id: number; name: string; link: null | string }[]; }, index: number) => {
 
-            // const handleMouseEnter = () => {
-            //   setIsHovered(true);
-            // };
-
-            // const handleMouseLeave = () => {
-            //   setIsHovered(false);
-            // };
             const isHovered = menuItemHoverStates[index] || false;
 
             const handleMouseEnter = () => {
@@ -193,8 +162,7 @@ export default function Mnnavbar() {
                     onMouseLeave={handleMouseLeave}
                   >
                     <Link
-                      // href={item.url}
-                      href='./'
+                      href={`/catalogue/1/${item.id}/${index}`}
                       className="inline-flex items-center transition transform-gpu duration-300"
                     >
                       {item.name}
@@ -206,10 +174,9 @@ export default function Mnnavbar() {
                     </Link>
                     {/* 子菜单 */}
                     <div className="absolute left-0 hidden mt-0 border-t-2 border-t-customBorder rounded-sm shadow space-y-1 bg-white border border-gray-300 dark:bg-gray-800 dark:border-gray-700 group-hover:block">
-                      {item.children.map((child: { name: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | React.PromiseLikeOfReactNode | null | undefined; }, childIndex: any) => (
+                      {item.children.map((child: { id: number; name: string; link: null | string }, childIndex: number) => (
                         <Link
-                          // href={child.url}
-                          href='./'
+                          href={`/catalogue/${item.id}/${child.id}/${childIndex}`}
                           key={`${child.name}-${childIndex}`}
                           className="block px-1 py-1 min-w-[79px]"
                         >
@@ -219,21 +186,21 @@ export default function Mnnavbar() {
                     </div>
                   </div>
                 ) : (
-                  // 无子菜单
-                  <Link 
-                  // href={item.url} 
-                  href='./'
-
-                  className="inline-flex items-center">
-                    {item.name}
-                  </Link>
+                  // 无子菜
+                  <div>
+                    {item.link ? (
+                      <a href={item.link}  className="inline-flex items-center" target="_blank">{item.name}</a>
+                    ) : (
+                      <Link href={`/catalogue/1/${item.id}/0`} className="inline-flex items-center">{item.name}</Link>
+                    ) }
+                  </div>
                 )}
               </NavbarItem>
             );
           })}
         </NavbarContent>)
         :
-        (<p>loading</p> )}
+        (<p></p> )}
 
 
       </Navbar>

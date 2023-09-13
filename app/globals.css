@@ -33,11 +33,23 @@ body,
 }
 .articles p{
   text-indent: 2em;
-  margin: 2.5rem 0;
+  margin-bottom: 2rem;
   @media screen and (max-width: 768px)  {
     margin: 1.25rem 0;
   };
   @media screen and (max-width: 640px)  {
     margin: 1rem 0;
   };
+}
+.byjj .articles p:last-child {
+  margin: 0;
+  height: 0;
+}
+.zzjg strong{
+  font-size: 18px;
+  background-image: url("/images/zzjg.png");
+  background-size: 100% 39%;
+  background-repeat: no-repeat;
+  background-position: center;
+
 }
